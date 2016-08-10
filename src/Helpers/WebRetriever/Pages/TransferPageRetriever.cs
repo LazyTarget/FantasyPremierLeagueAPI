@@ -1,73 +1,55 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using FantasyPremierLeagueApi.Helpers.Logger;
 using System.Net;
-using HtmlAgilityPack;
+using Newtonsoft.Json.Linq;
 
 namespace FantasyPremierLeagueApi.Helpers.WebRetriever.Pages
 {
     public class TransferPageRetriever
     {
-        private const   string  _TRANSFERS_PAGE   = "http://fantasy.premierleague.com/transfers/";
+        private const   string  _TRANSFERS_PAGE   = "https://fantasy.premierleague.com/drf/transfers";
         private         ILogger _logger;
-        private         string  _transfersPageHtmlString;
+        private         JObject _jsonData;
 
         public TransferPageRetriever(ILogger logger, CookieContainer cookies)
         {
             _logger = logger;
 
-            var requester = new WebPageRequester(_logger);
-            _transfersPageHtmlString = requester.Get(_TRANSFERS_PAGE, ref cookies);
+            var requester = new WebPageRequester(_logger);;
+            var json = requester.Get(_TRANSFERS_PAGE, ref cookies);
+            _jsonData = JObject.Parse(json);
         }
 
         /// <returns>Dictionary mapping player id to transfer value in 100,000's</returns>
         public Dictionary<int,int> GetMyTeamTransferValues()
         {
-            var htmlDoc = new HtmlDocument();
-            htmlDoc.LoadHtml(_transfersPageHtmlString);
-            
-            //var body = htmlDoc.GetElementbyId("ismTeamDisplayGraphical");
-            //var ismPitch = body.SelectSingleNode("//div[@class='ismPitch']");
-            //var players = ismPitch.SelectNodes("//div[@class='ismPlayerContainer']");
-
             var result = new Dictionary<int, int>();
 
-            for (int i = 0; i < 15; i++)
+            var picks = _jsonData?.Property("picks")?.Value?.ToObject<JArray>();
+            if (picks != null)
             {
-                string playerIdStr = htmlDoc.GetElementbyId(string.Format("id_pick_formset-{0}-element", i)).GetAttributeValue("value", "");
-                int playerId = int.Parse(playerIdStr);
-
-                string salePriceStr = htmlDoc.GetElementbyId(string.Format("id_pick_formset-{0}-selling_price", i)).GetAttributeValue("value", "");
-                int salePrice = int.Parse(salePriceStr);
-
-                result.Add(playerId, salePrice);
+                foreach (var pick in picks.OfType<JObject>())
+                {
+                    var playerId = pick?.Property("element")?.Value?.ToObject<int>() ?? 0;
+                    var salePrice = pick?.Property("selling_price")?.Value?.ToObject<decimal>() ?? 0;
+                    if (playerId <= 0)
+                        continue;
+                    //salePrice /= 10;
+                    result[playerId] = (int)salePrice;
+                }
             }
-
-            /*foreach (var player in players)
-            {
-                string playerIdStr = player.SelectSingleNode("//a[@class='ismViewProfile']").GetAttributeValue("href",""); // string in form "#<id>"
-                int playerId = int.Parse(playerIdStr.TrimStart('#'));
-
-                string salePriceStr = player.SelectSingleNode("//span[@class='ismPitchStat']").InnerText; // string in form "£<sell price>"
-                decimal salePrice = decimal.Parse(salePriceStr.TrimStart('£'));
-
-                result.Add(playerId, salePrice);
-            }*/
-
             return result;
         }
 
         /// <returns>The amount the logged on user has in the bank</returns>
         public decimal GetRemainingBudget()
         {
-            var htmlDoc = new HtmlDocument();
-            htmlDoc.LoadHtml(_transfersPageHtmlString);
-            var ismToSpendElement = htmlDoc.GetElementbyId("ismToSpend");
-
-            var remainingBudgetStr = ismToSpendElement.InnerText.TrimStart('£').Replace(',', '.');
-            return decimal.Parse(remainingBudgetStr, System.Globalization.CultureInfo.InvariantCulture);
+            var remaining = _jsonData?.Property("helper")?.Value?.ToObject<JObject>()
+                                     ?.Property("bank")?.Value?.ToObject<decimal>() ?? 0;
+            remaining /= 10;
+            return remaining;
         }
     }
 }

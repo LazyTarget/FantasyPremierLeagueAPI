@@ -47,6 +47,8 @@ namespace FantasyPremierLeagueApi.Helpers.WebRetriever.Pages
         /// <param name="season">A string in the form 2012-2013</param>
         public IEnumerable<ClubSeasonPerformance> GetLeagueTable(CookieContainer cookies, string season)
         {
+            throw new NotImplementedException();
+
             var requester = new WebPageRequester(_logger);
 
             var url = string.Format("{0}&{1}={2}", _LEAGUETABLE_HOMEPAGE, _PARAM_SEASON, season);
