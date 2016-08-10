@@ -50,8 +50,6 @@ namespace FantasyPremierLeagueApi.Helpers.WebRetriever
         {
             try
             {
-                System.Net.ServicePointManager.Expect100Continue = false;
-
                 System.Net.HttpWebResponse resp;
                 var requester = new WebPageRequester(_logger);
                 var cookies = new CookieContainer();
@@ -64,8 +62,7 @@ namespace FantasyPremierLeagueApi.Helpers.WebRetriever
                     contenttype: null, 
                     method: "GET",
                     data: null,
-                    refCookies: ref cookies, 
-                    resp: out resp,
+                    refCookies: ref cookies,
                     referer: null
                 );
                 DumpCookies(cookies);
@@ -101,7 +98,6 @@ namespace FantasyPremierLeagueApi.Helpers.WebRetriever
                     method: "POST",
                     data: parameters,
                     refCookies: ref cookies,
-                    resp: out resp,
                     referer: "https://users.premierleague.com/"
                 );
                 DumpCookies(cookies);
@@ -129,30 +125,6 @@ namespace FantasyPremierLeagueApi.Helpers.WebRetriever
                 }
                 _logger.WriteDebugMessage("Cookies have been copied");
                 DumpCookies(cookies);
-
-
-
-                _logger.WriteDebugMessage("GET a/team/my");
-                url = "https://fantasy.premierleague.com/a/team/my";
-                var response2 = requester.Get(url, ref cookies, out resp);
-                DumpCookies(cookies);
-
-                _logger.WriteDebugMessage("GET drf/bootstrap-dynamic");
-                url = "https://fantasy.premierleague.com/drf/bootstrap-dynamic";
-                var response3 = requester.Get(url, ref cookies, out resp);
-                DumpCookies(cookies);
-
-                _logger.WriteDebugMessage("GET drf/transfers");
-                url = "https://fantasy.premierleague.com/drf/transfers";
-                var response4 = requester.Get(url, ref cookies, out resp);
-                DumpCookies(cookies);
-
-                var teamID = "1733540";
-                _logger.WriteDebugMessage("GET drf/my-team/" + teamID);
-                url = "https://fantasy.premierleague.com/drf/my-team/" + teamID;
-                var response6 = requester.Get(url, ref cookies, out resp);
-                DumpCookies(cookies);
-
 
                 return cookies;
             }
@@ -204,32 +176,22 @@ namespace FantasyPremierLeagueApi.Helpers.WebRetriever
             {
                 _logger = logger;
             }
+            
 
             public string Post(string url, string data, ref CookieContainer refCookies)
             {
-                System.Net.HttpWebResponse resp;
-                return Post(url, data, ref refCookies, out resp);
-            }
-
-            public string Post(string url, string data, ref CookieContainer refCookies, out System.Net.HttpWebResponse resp)
-            {
-                return MakeRequest(url, "application/x-www-form-urlencoded", "POST", data, ref refCookies, out resp);
+                return MakeRequest(url, "application/x-www-form-urlencoded", "POST", data, ref refCookies);
             }
 
             public string Get(string url, ref CookieContainer refCookies)
             {
-                System.Net.HttpWebResponse resp;
-                return Get(url, ref refCookies, out resp);
+                return MakeRequest(url, "text/html", "GET", null, ref refCookies);
             }
 
-            public string Get(string url, ref CookieContainer refCookies, out System.Net.HttpWebResponse resp)
-            {
-                return MakeRequest(url, "text/html", "GET", null, ref refCookies, out resp);
-            }
 
             #region Private Methods
 
-            public string MakeRequest(string url, string contenttype, string method, string data, ref CookieContainer refCookies, out System.Net.HttpWebResponse resp, string referer = null)
+            public string MakeRequest(string url, string contenttype, string method, string data, ref CookieContainer refCookies, string referer = null)
             {
                 // create new request
                 var req = (HttpWebRequest)System.Net.HttpWebRequest.Create(url);
@@ -273,13 +235,13 @@ namespace FantasyPremierLeagueApi.Helpers.WebRetriever
 
                 _logger.WriteDebugMessage("WebPageRequester.MakeRequest - Reading response");
 
-                resp = (HttpWebResponse)req.GetResponse();
+                using (var resp = (HttpWebResponse)req.GetResponse())
                 {
                     if (resp == null)
                         _logger.WriteErrorMessage("WebPageRequester.MakeRequest - No response received");
                     System.IO.StreamReader sr = new System.IO.StreamReader(resp.GetResponseStream());
                     var strResponse = sr.ReadToEnd().Trim();
-                   // _logger.WriteInfoMessage("WebPageRequester.MakeRequest - Response: " + strResponse);
+                    // _logger.WriteInfoMessage("WebPageRequester.MakeRequest - Response: " + strResponse);
                     _logger.WriteDebugMessage("WebPageRequester.MakeRequest - Response Content Length: " + resp.ContentLength);
                     _logger.WriteDebugMessage("WebPageRequester.MakeRequest - Response Content Encoding: " + resp.ContentEncoding);
                     _logger.WriteDebugMessage("WebPageRequester.MakeRequest - Response Content Type: " + resp.ContentType);
