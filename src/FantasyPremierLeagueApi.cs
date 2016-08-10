@@ -228,13 +228,18 @@ namespace FantasyPremierLeagueApi.Api
             return _transferPageRetriever;
         }
 
+        protected virtual IAuthenticator GetFantasyPremierLeagueAuthenticator()
+        {
+            IAuthenticator authenticator = new FantasyPremierLeague2016Authenticator(Logger);
+            return authenticator;
+        }
+
         protected virtual void CheckAndCreateSession()
         {
             if (_session == null)
             {
                 Logger.WriteInfoMessage("Creating Session");
-                //var authenticator = new FantasyPremierLeagueAuthenticator(Logger);
-                var authenticator = new FantasyPremierLeague2016Authenticator(Logger);
+                var authenticator = GetFantasyPremierLeagueAuthenticator(); ;
                 _session = authenticator.Authenticate(_username, _password);
 
                 if (_session == null)

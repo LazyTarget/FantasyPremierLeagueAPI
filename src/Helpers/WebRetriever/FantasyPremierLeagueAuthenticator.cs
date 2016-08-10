@@ -30,7 +30,7 @@ using FantasyPremierLeagueApi.Helpers.Logger;
 
 namespace FantasyPremierLeagueApi.Helpers.WebRetriever
 {
-    public class FantasyPremierLeagueAuthenticator
+    public class FantasyPremierLeagueAuthenticator : IAuthenticator
     {
         private const string _URL_GETSESSIONCOOKIES1    = "https://users.premierleague.com";
         private const string _URL_GETSESSIONCOOKIES2    = "https://users.premierleague.com/PremierUser/account/login.html";

@@ -31,7 +31,7 @@ using HtmlAgilityPack;
 
 namespace FantasyPremierLeagueApi.Helpers.WebRetriever
 {
-    public class FantasyPremierLeague2016Authenticator
+    public class FantasyPremierLeague2016Authenticator : IAuthenticator
     {
         private static string _URL_LOGIN                 = "https://fantasy.premierleague.com/accounts/login/";
         private static string _URL_LOGIN_CONFIRM         = "https://fantasy.premierleague.com/a/login?a={0}&state=success&r={1}&e=3600&s=read+write";
@@ -191,7 +191,7 @@ namespace FantasyPremierLeagueApi.Helpers.WebRetriever
 
 
 
-        private class WebPageRequester
+        public class WebPageRequester
         {
             private const string _HEADERS_ACCEPT            = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
             private const string _HEADERS_ACCEPT_ENCODING   = "gzip, deflate";
