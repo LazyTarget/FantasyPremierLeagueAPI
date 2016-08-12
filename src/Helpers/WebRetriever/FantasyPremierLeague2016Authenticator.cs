@@ -108,23 +108,67 @@ namespace FantasyPremierLeagueApi.Helpers.WebRetriever
                 var uriSource = new Uri("https://users.premierleague.com/");
                 var uriTarget = new Uri("https://fantasy.premierleague.com/");
                 var sourceCookies = cookies.GetCookies(uriSource);
-                cookies.SetCookies(uriTarget, sourceCookies["sessionid"].ToString());
-                cookies.SetCookies(uriTarget, sourceCookies["pl_profile"].ToString());
+
+
+                var sCookie = sourceCookies["sessionid"];
+                if (sCookie != null)
+                {
+                    cookies.SetCookies(uriTarget, sCookie.ToString());
+                }
+                sCookie = sourceCookies["pl_profile"];
+                if (sCookie != null)
+                {
+                    cookies.SetCookies(uriTarget, sCookie.ToString());
+                }
                 if (string.IsNullOrWhiteSpace(cookies.GetCookies(uriTarget)["csrftoken"]?.Value))
                 {
-                    cookies.SetCookies(uriTarget, sourceCookies["csrftoken"].ToString());
+                    sCookie = sourceCookies["csrftoken"];
+                    if (sCookie != null)
+                        cookies.SetCookies(uriTarget, sCookie.ToString());
                 }
+
 
                 uriTarget = new Uri("https://premierleague.com/");
                 sourceCookies = cookies.GetCookies(uriSource);
-                cookies.SetCookies(uriTarget, sourceCookies["sessionid"].ToString());
-                cookies.SetCookies(uriTarget, sourceCookies["pl_profile"].ToString());
+                if (string.IsNullOrWhiteSpace(cookies.GetCookies(uriTarget)["sessionid"]?.Value))
+                {
+                    sCookie = sourceCookies["sessionid"];
+                    if (sCookie != null)
+                        cookies.SetCookies(uriTarget, sCookie.ToString());
+                }
+                if (string.IsNullOrWhiteSpace(cookies.GetCookies(uriTarget)["pl_profile"]?.Value))
+                {
+                    sCookie = sourceCookies["pl_profile"];
+                    if (sCookie != null)
+                        cookies.SetCookies(uriTarget, sCookie.ToString());
+                }
                 if (string.IsNullOrWhiteSpace(cookies.GetCookies(uriTarget)["csrftoken"]?.Value))
                 {
-                    cookies.SetCookies(uriTarget, sourceCookies["csrftoken"].ToString());
+                    sCookie = sourceCookies["csrftoken"];
+                    if (sCookie != null)
+                        cookies.SetCookies(uriTarget, sCookie.ToString());
                 }
                 _logger.WriteDebugMessage("Cookies have been copied");
                 DumpCookies(cookies);
+
+
+                var testUri = new Uri("https://fantasy.premierleague.com/drf/transfers");
+                var testRequest = requester.MakeRequest(
+                    url: testUri.OriginalString,
+                    contenttype: null,
+                    method: "GET",
+                    data: null,
+                    refCookies: ref cookies,
+                    referer: null
+                );
+
+                uriTarget = new Uri("https://fantasy.premierleague.com/");
+                var targetCookies = cookies.GetCookies(uriTarget);
+                var sessionCookie = targetCookies["sessionid"];
+                if (sessionCookie == null || string.IsNullOrEmpty(sessionCookie.Value))
+                {
+                    throw new Exception("Could not authenticate");
+                }
 
                 return cookies;
             }
